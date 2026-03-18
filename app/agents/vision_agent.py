@@ -75,14 +75,14 @@ async def _infer_intent(state: AgentState) -> AgentState:
 
 
 async def _run_vision_model(state: AgentState) -> AgentState:
-    response_text = await identify_image(
+    response_text, structured_data = await identify_image(
         image_b64=state["image_b64"],
         media_type=state["media_type"],
         prompt=state["prompt"],
         task_type=state["task_type"],
         memory_context=state["memory_context"],
     )
-    return {"response_text": response_text}
+    return {"response_text": response_text, "structured_data": structured_data}
 
 
 def _update_memory(state: AgentState) -> AgentState:
@@ -132,4 +132,5 @@ async def run_vision_agent(request: ImageRequest) -> AgentResult:
         request_id=request.request_id,
         task_type=result["task_type"],
         response_text=result["response_text"],
+        structured_data=result.get("structured_data"),
     )

@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, TypedDict
 
 
 class AgentState(TypedDict, total=False):
@@ -11,3 +11,4 @@ class AgentState(TypedDict, total=False):
     task_type: str
     memory_context: str
     response_text: str
+    structured_data: dict[str, Any] | None
