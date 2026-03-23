@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from fastapi import APIRouter, File, Form, UploadFile
 from pydantic import BaseModel, Field
@@ -21,13 +20,6 @@ class IdentifyResponse(BaseModel):
         ),
     )
     analysis: str = Field(description="The model's detailed analysis of the image")
-    structured_data: dict[str, Any] | None = Field(
-        default=None,
-        description=(
-            "Structured component data returned when task_type is 'identify_component'. "
-            "Contains a 'components' list and a 'summary'. Null for other task types."
-        ),
-    )
 
     model_config = {
         "json_schema_extra": {
@@ -36,7 +28,6 @@ class IdentifyResponse(BaseModel):
                     "request_id": "req-001",
                     "task_type": "analyze_circuit",
                     "analysis": "I can see an LED connected to a 220Ω resistor on a breadboard...",
-                    "structured_data": None,
                 }
             ]
         }
@@ -97,5 +88,4 @@ async def identify(
         request_id=result.request_id,
         task_type=result.task_type,
         analysis=result.response_text,
-        structured_data=result.structured_data,
     )

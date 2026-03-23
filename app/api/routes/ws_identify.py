@@ -40,7 +40,6 @@ async def ws_identify(websocket: WebSocket, client_id: str) -> None:
                 await manager.send_done(
                     websocket=websocket,
                     request_id=result.request_id,
-                    structured_data=result.structured_data,
                 )
                 logger.info(
                     "Completed identification for %s / %s in mode %s",

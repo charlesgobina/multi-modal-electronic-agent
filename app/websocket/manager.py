@@ -41,20 +41,11 @@ class ConnectionManager:
             {"event": "chunk", "request_id": request_id, "text": text},
         )
 
-    async def send_done(
-        self,
-        websocket: WebSocket,
-        request_id: str,
-        structured_data: dict[str, object] | None = None,
-    ) -> None:
-        payload: dict[str, object] = {
-            "event": "done",
-            "request_id": request_id,
-            "ts": time.time(),
-        }
-        if structured_data is not None:
-            payload["structured_data"] = structured_data
-        await self.send_json(websocket, payload)
+    async def send_done(self, websocket: WebSocket, request_id: str) -> None:
+        await self.send_json(
+            websocket,
+            {"event": "done", "request_id": request_id, "ts": time.time()},
+        )
 
     async def send_error(self, websocket: WebSocket, payload: ErrorEvent) -> None:
         await self.send_json(

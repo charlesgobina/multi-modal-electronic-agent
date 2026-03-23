@@ -1,16 +1,11 @@
 import asyncio
-import logging
 from collections.abc import AsyncIterator
-from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.core.config import get_settings
-from app.schemas.components import IdentifyComponentResult
 from app.services.image_processing import validate_and_prepare_image
 from app.services.model_client import get_llm
-
-logger = logging.getLogger(__name__)
 
 
 TASK_INSTRUCTIONS = {
@@ -23,12 +18,16 @@ TASK_INSTRUCTIONS = {
     ),
     "identify_component": (
         "The student needs help identifying one or more electrical/electronic components.\n"
+        "Respond directly with the identified components and their functions.\n"
+        "Do not start with scene-setting phrases like 'The image shows', 'I can see', or similar.\n"
+        "Start with the first identified component immediately.\n"
         "For each component you can identify:\n"
         "- **Name & type**: e.g. '10kΩ resistor (carbon film, 5-band)', 'NPN transistor (TO-92 package)'.\n"
         "- **Key specs**: read color bands, markings, or labels if visible; state values and tolerances.\n"
         "- **Function**: what this component does in a circuit (1-2 sentences).\n"
         "- **Orientation/polarity**: if the component has polarity (LED, electrolytic cap, diode), "
         "state whether it appears to be oriented correctly based on visible connections.\n"
+        "Use concise plain text or bullets, prioritizing the answer over narration.\n"
         "If you cannot read markings clearly, say so and give your best estimate with reasoning."
     ),
     "read_text": (
@@ -83,13 +82,7 @@ async def identify_image(
     prompt: str,
     task_type: str,
     memory_context: str,
-) -> tuple[str, dict[str, Any] | None]:
-    """Return (response_text, structured_data) for the given image and prompt.
-
-    For the ``identify_component`` intent the vision model is called with
-    structured output so that downstream consumers receive machine-readable
-    component data alongside the human-readable summary.
-    """
+) -> str:
     settings = get_settings()
     llm = get_llm()
 
@@ -114,25 +107,6 @@ async def identify_image(
         ]),
     ]
 
-    if task_type == "identify_component":
-        return await _identify_component_structured(llm, messages)
-
     response = await llm.ainvoke(messages)
     text = response.content if isinstance(response.content, str) else ""
-    return text.strip(), None
-
-
-async def _identify_component_structured(
-    llm: Any,
-    messages: list,
-) -> tuple[str, dict[str, Any] | None]:
-    """Call the vision LLM with structured output for component identification."""
-    try:
-        structured_llm = llm.with_structured_output(IdentifyComponentResult)
-        result: IdentifyComponentResult = await structured_llm.ainvoke(messages)
-        return result.summary, result.model_dump()
-    except Exception:
-        logger.exception("Structured component identification failed, falling back to plain text")
-        response = await llm.ainvoke(messages)
-        text = response.content if isinstance(response.content, str) else ""
-        return text.strip(), None
+    return text.strip()
